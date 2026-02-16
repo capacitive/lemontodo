@@ -1,7 +1,7 @@
 import * as signalR from '@microsoft/signalr';
 
 const connection = new signalR.HubConnectionBuilder()
-  .withUrl('http://localhost:5062/hubs/tasks')
+  .withUrl('http://localhost:5175/hubs/tasks')
   .withAutomaticReconnect()
   .build();
 
