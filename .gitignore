@@ -65,3 +65,7 @@ dist/
 # Environment
 .env
 .env.*
+
+# Claude Code local context
+CLAUDE.md
+.claude/
