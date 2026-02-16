@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using LemonTodo.Application.DTOs;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Hosting;
 
 namespace LemonTodo.Api.Tests;
 
@@ -12,7 +14,11 @@ public class TaskEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
     public TaskEndpointTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.CreateClient();
+        var testFactory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Testing");
+        });
+        _client = testFactory.CreateClient();
     }
 
     [Fact]
