@@ -49,6 +49,42 @@ describe('ListView', () => {
     expect(screen.getByText('New Task')).toBeInTheDocument();
   });
 
+  it('should open edit modal when Edit button clicked on active task', async () => {
+    const user = userEvent.setup();
+    render(<ListView />);
+
+    await waitFor(() => {
+        expect(screen.getByText('Test Task 1')).toBeInTheDocument();
+        expect(screen.getByText('Test Task 2')).toBeInTheDocument();
+      });
+  
+      const buttons = screen.getAllByText('Edit');
+  
+      await user.click(buttons[0]);
+
+    expect(screen.getByText('Edit Task')).toBeInTheDocument();
+  });
+
+  it('should pre-fill edit modal with task data', async () => {
+      const user = userEvent.setup();
+      render(<ListView />);
+  
+      await waitFor(() => {
+        expect(screen.getByText('Test Task 1')).toBeInTheDocument();
+        expect(screen.getByText('Test Task 2')).toBeInTheDocument();
+      });
+  
+      const buttons = screen.getAllByText('Edit');
+  
+      await user.click(buttons[0]);
+  
+      expect(screen.getByText('Edit Task')).toBeInTheDocument();
+  
+      const inputPrefilledValue = screen.getByDisplayValue('Test Task 1');
+  
+      expect(inputPrefilledValue).toBeInTheDocument();
+    });
+
   it('should display loading state', () => {
     render(<ListView />);
 
