@@ -16,12 +16,16 @@ export function DraggableCard({ task, onClose, onReopen, onEdit }: DraggableCard
   });
 
   return (
-    <div
+    <div {...attributes}
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
-      {...listeners}
-      {...attributes}
     >
+      <div {...listeners}
+        style={{ cursor: 'grab', padding: '4px 0', color: '#d1d5db', fontSize: '0.75rem', userSelect: 'none' }}
+        title="Drag to move"
+      >
+        ⠿ drag
+      </div>
       <TaskCard task={task} onClose={onClose} onReopen={onReopen} onEdit={onEdit} draggable />
     </div>
   );
