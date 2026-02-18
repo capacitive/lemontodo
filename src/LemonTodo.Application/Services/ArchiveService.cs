@@ -42,4 +42,17 @@ public class ArchiveService : IArchiveService
         await _archiveRepo.DeleteAsync(id, ct);
         return task.ToResponse();
     }
+
+    public async Task DeleteAsync(string id, CancellationToken ct = default)
+    {
+        var task = await _archiveRepo.GetByIdAsync(id, ct)
+            ?? throw new KeyNotFoundException($"Archived task '{id}' not found.");
+
+        await _archiveRepo.DeleteAsync(id, ct);
+    }
+
+    public async Task PurgeAllAsync(CancellationToken ct = default)
+    {
+        await _archiveRepo.PurgeAllAsync(ct);
+    }
 }

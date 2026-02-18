@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useArchiveSearch, useRestoreTask } from '../../hooks/useArchive';
+import { useArchiveSearch, useRestoreTask, useDeleteArchiveTask, usePurgeAllArchive } from '../../hooks/useArchive';
 import { toast } from 'sonner';
 
 export function ArchiveView() {
@@ -7,6 +7,23 @@ export function ArchiveView() {
   const [page, setPage] = useState(1);
   const { data, isLoading, error } = useArchiveSearch(query, page);
   const restoreTask = useRestoreTask();
+  const deleteTask = useDeleteArchiveTask();
+  const purgeAll = usePurgeAllArchive();
+
+  const handleDelete = (id: string) => {
+    deleteTask.mutate(id, {
+      onSuccess: () => toast.success('Task deleted'),
+      onError: () => toast.error('Failed to delete task'),
+    });
+  };
+
+  const handlePurgeAll = () => {
+    if (!confirm('Are you sure you want to permanently delete all archived tasks?')) return;
+    purgeAll.mutate(undefined, {
+      onSuccess: () => toast.success('All archived tasks deleted'),
+      onError: () => toast.error('Failed to purge archive'),
+    });
+  };
 
   const handleRestore = (id: string) => {
     restoreTask.mutate(id, {
@@ -19,7 +36,22 @@ export function ArchiveView() {
 
   return (
     <div style={{ padding: 24, maxWidth: 700, margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.2rem', color: '#374151', marginBottom: 16 }}>Archive</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h2 style={{ fontSize: '1.2rem', color: '#374151', margin: 0 }}>Archive</h2>
+        {data && data.totalCount > 0 && (
+          <button
+            onClick={handlePurgeAll}
+            disabled={purgeAll.isPending}
+            style={{
+              padding: '6px 14px', borderRadius: 6, border: 'none',
+              background: '#fee2e2', color: '#dc2626', cursor: 'pointer',
+              fontWeight: 500, fontSize: '0.8rem',
+            }}
+          >
+            Purge All
+          </button>
+        )}
+      </div>
 
       <input
         type="text"
@@ -63,17 +95,30 @@ export function ArchiveView() {
                     Closed: {task.closedAt ? new Date(task.closedAt).toLocaleDateString() : 'N/A'}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleRestore(task.id)}
-                  disabled={restoreTask.isPending}
-                  style={{
-                    padding: '6px 14px', borderRadius: 6, border: 'none',
-                    background: '#dbeafe', color: '#2563eb', cursor: 'pointer',
-                    fontWeight: 500, fontSize: '0.8rem', flexShrink: 0,
-                  }}
-                >
-                  Restore
-                </button>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button
+                    onClick={() => handleRestore(task.id)}
+                    disabled={restoreTask.isPending}
+                    style={{
+                      padding: '6px 14px', borderRadius: 6, border: 'none',
+                      background: '#dbeafe', color: '#2563eb', cursor: 'pointer',
+                      fontWeight: 500, fontSize: '0.8rem',
+                    }}
+                  >
+                    Restore
+                  </button>
+                  <button
+                    onClick={() => handleDelete(task.id)}
+                    disabled={deleteTask.isPending}
+                    style={{
+                      padding: '6px 14px', borderRadius: 6, border: 'none',
+                      background: '#fee2e2', color: '#dc2626', cursor: 'pointer',
+                      fontWeight: 500, fontSize: '0.8rem',
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
 

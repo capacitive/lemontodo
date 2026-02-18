@@ -51,4 +51,10 @@ public class ArchiveTaskRepository : IArchiveTaskRepository
             await _db.SaveChangesAsync(ct);
         }
     }
+
+    public async Task PurgeAllAsync(CancellationToken ct = default)
+    {
+        _db.Tasks.RemoveRange(_db.Tasks);
+        await _db.SaveChangesAsync(ct);
+    }
 }

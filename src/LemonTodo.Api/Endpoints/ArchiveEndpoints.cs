@@ -38,5 +38,24 @@ public static class ArchiveEndpoints
                 return Results.Conflict(new { error = ex.Message });
             }
         });
+
+        group.MapDelete("/{id}", async (string id, IArchiveService svc, CancellationToken ct) =>
+        {
+            try
+            {
+                await svc.DeleteAsync(id, ct);
+                return Results.NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return Results.NotFound();
+            }
+        });
+
+        group.MapDelete("/purge", async (IArchiveService svc, CancellationToken ct) =>
+        {
+            await svc.PurgeAllAsync(ct);
+            return Results.NoContent();
+        });
     }
 }
