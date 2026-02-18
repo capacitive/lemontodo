@@ -18,3 +18,23 @@ export function useRestoreTask() {
     },
   });
 }
+
+export function useDeleteArchiveTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => archiveApi.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['archive'] });
+    },
+  });
+}
+
+export function usePurgeAllArchive() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => archiveApi.purgeAll(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['archive'] });
+    },
+  });
+}

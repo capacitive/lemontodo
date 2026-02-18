@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { TaskResponse, TodoTaskStatus } from '../../types';
 import { useTasks, useCloseTask, useReopenTask, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
+import { useArchiveSearch } from '../../hooks/useArchive';
 import { BoardColumn } from './BoardColumn';
 import { TaskModal } from '../Task/TaskModal';
 import type { CreateTaskRequest, UpdateTaskRequest } from '../../types';
@@ -14,6 +15,7 @@ const columns: { status: TodoTaskStatus; label: string; color: string }[] = [
 
 export function BoardView() {
   const { data: tasks, isLoading, error } = useTasks();
+  const { data: archiveData } = useArchiveSearch('', 1, 100);
   const closeTask = useCloseTask();
   const reopenTask = useReopenTask();
   const createTask = useCreateTask();
@@ -40,8 +42,15 @@ export function BoardView() {
   if (isLoading) return <div style={{ padding: 24, textAlign: 'center' }}>Loading...</div>;
   if (error) return <div style={{ padding: 24, color: '#dc2626' }}>Error loading tasks</div>;
 
+  const archivedTasks = archiveData?.items ?? [];
   const grouped = Object.fromEntries(
-    columns.map(({ status }) => [status, tasks?.filter((t) => t.status === status) ?? []])
+    columns.map(({ status }) => {
+      const active = tasks?.filter((t) => t.status === status) ?? [];
+      if (status === 'Closed') {
+        return [status, [...active, ...archivedTasks]];
+      }
+      return [status, active];
+    })
   ) as Record<TodoTaskStatus, TaskResponse[]>;
 
   return (
