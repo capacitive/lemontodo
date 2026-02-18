@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useTasks, useCloseTask, useReopenTask, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
+import { useArchiveSearch } from '../../hooks/useArchive';
 import { TaskCard } from '../Task/TaskCard';
 import { TaskModal } from '../Task/TaskModal';
 import type { TaskResponse, CreateTaskRequest, UpdateTaskRequest } from '../../types';
 
 export function ListView() {
   const { data: tasks, isLoading, error } = useTasks();
+  const { data: archiveData } = useArchiveSearch('', 1, 100);
   const closeTask = useCloseTask();
   const reopenTask = useReopenTask();
   const createTask = useCreateTask();
@@ -17,7 +19,10 @@ export function ListView() {
   if (error) return <div style={{ padding: 24, color: '#dc2626' }}>Error loading tasks</div>;
 
   const active = tasks?.filter((t) => t.status !== 'Closed') ?? [];
-  const recentlyClosed = tasks?.filter((t) => t.status === 'Closed') ?? [];
+  const recentlyClosed = [
+    ...(tasks?.filter((t) => t.status === 'Closed') ?? []),
+    ...(archiveData?.items ?? []),
+  ];
 
   return (
     <div style={{ padding: 24, maxWidth: 700, margin: '0 auto' }}>
@@ -55,13 +60,33 @@ export function ListView() {
           <h2 style={{ fontSize: '1.1rem', color: '#374151', marginBottom: 12 }}>
             Recently Closed ({recentlyClosed.length})
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {recentlyClosed.map((task) => (
-              <TaskCard
+              <div
                 key={task.id}
-                task={task}
-                onReopen={() => reopenTask.mutate(task.id)}
-              />
+                style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '6px 10px', borderRadius: 6, fontSize: '0.85rem',
+                  color: '#6b7280', background: '#f9fafb',
+                }}
+              >
+                <span style={{ textDecoration: 'line-through' }}>{task.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                    {task.closedAt ? new Date(task.closedAt).toLocaleDateString() : ''}
+                  </span>
+                  <button
+                    onClick={() => reopenTask.mutate(task.id)}
+                    style={{
+                      padding: '2px 8px', borderRadius: 4, border: 'none',
+                      background: '#dbeafe', color: '#2563eb', fontSize: '0.75rem',
+                      cursor: 'pointer', fontWeight: 500,
+                    }}
+                  >
+                    Reopen
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </>

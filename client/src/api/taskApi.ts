@@ -15,4 +15,6 @@ export const archiveApi = {
     api.get<PagedResponse<TaskResponse>>(`/archive?q=${q ?? ''}&page=${page}&pageSize=${pageSize}`),
   getById: (id: string) => api.get<TaskResponse>(`/archive/${id}`),
   restore: (id: string) => api.patch<TaskResponse>(`/archive/${id}/restore`),
+  delete: (id: string) => api.delete(`/archive/${id}`),
+  purgeAll: () => api.delete('/archive/purge'),
 };
