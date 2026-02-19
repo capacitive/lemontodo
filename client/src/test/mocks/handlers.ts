@@ -1,10 +1,10 @@
 import { http, HttpResponse } from 'msw';
-import type { Task, CreateTaskRequest, UpdateTaskRequest, PagedResponse } from '../../types';
+import type { TaskResponse, CreateTaskRequest, UpdateTaskRequest, PagedResponse } from '../../types';
 
 const BASE_URL = 'http://localhost:5175/api';
 
 // Mock data
-let mockTasks: Task[] = [
+let mockTasks: TaskResponse[] = [
   {
     id: 'test-task-1',
     name: 'Test Task 1',
@@ -27,7 +27,7 @@ let mockTasks: Task[] = [
   },
 ];
 
-let mockArchive: Task[] = [
+let mockArchive: TaskResponse[] = [
   {
     id: 'archived-task-1',
     name: 'Archived Task',
@@ -58,7 +58,7 @@ export const handlers = [
   // POST /api/tasks - Create task
   http.post(`${BASE_URL}/tasks`, async ({ request }) => {
     const body = (await request.json()) as CreateTaskRequest;
-    const newTask: Task = {
+    const newTask: TaskResponse = {
       id: `task-${Date.now()}`,
       name: body.name,
       description: body.description || null,
@@ -132,12 +132,11 @@ export const handlers = [
     const start = (page - 1) * pageSize;
     const items = filtered.slice(start, start + pageSize);
 
-    const response: PagedResponse<Task> = {
+    const response: PagedResponse<TaskResponse> = {
       items,
       page,
       pageSize,
       totalCount: filtered.length,
-      totalPages: Math.ceil(filtered.length / pageSize),
     };
 
     return HttpResponse.json(response);

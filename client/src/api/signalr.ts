@@ -1,7 +1,10 @@
 import * as signalR from '@microsoft/signalr';
+import { getAccessToken } from './client';
 
 const connection = new signalR.HubConnectionBuilder()
-  .withUrl('http://localhost:5175/hubs/tasks')
+  .withUrl('http://localhost:5175/hubs/tasks', {
+    accessTokenFactory: () => getAccessToken() ?? '',
+  })
   .withAutomaticReconnect()
   .build();
 

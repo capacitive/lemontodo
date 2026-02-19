@@ -30,4 +30,4 @@ export interface PagedResponse<T> {
   pageSize: number;
 }
 
-export type ViewMode = 'board' | 'list' | 'archive';
+export type ViewMode = 'board' | 'list' | 'archive' | 'profile';
