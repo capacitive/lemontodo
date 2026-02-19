@@ -7,14 +7,14 @@ A full-stack to-do task management application built with .NET 9 Minimal API and
 ```
 ┌─────────────┐     ┌───────────────────┐     ┌──────────────────┐
 │  React SPA  │────▶│  .NET Minimal API │────▶│  EF Core Stores  │
-│  (Vite+TS)  │◀────│  + SignalR Hub    │     │  InMemory+SQLite │
+│  (Vite+TS)  │◀────│  + SignalR Hub    │     │  SQLite+SQLite   │
 └─────────────┘     └───────────────────┘     └──────────────────┘
 ```
 
 **Clean Architecture layers:**
 - **Domain** — `TodoTask` entity with state machine, domain events, interfaces (zero dependencies)
 - **Application** — Services, DTOs, FluentValidation, mapping
-- **Infrastructure** — EF Core dual-context (InMemory for active, SQLite for archive), repositories, event channel
+- **Infrastructure** — EF Core dual-context (SQLite for active, SQLite for archive), repositories, event channel
 - **Api** — Minimal API endpoints, SignalR hub, background archive worker
 
 **Frontend:**
@@ -63,11 +63,14 @@ npm run dev
 | `GET` | `/api/tasks/{id}` | Get task by ID |
 | `POST` | `/api/tasks` | Create task (201 + Location) |
 | `PUT` | `/api/tasks/{id}` | Update task name/description/date |
+| `PATCH` | `/api/tasks/{id}/start` | Start task (Open/Reopened → InProgress) |
 | `PATCH` | `/api/tasks/{id}/close` | Close task (triggers archival) |
 | `PATCH` | `/api/tasks/{id}/reopen` | Reopen a closed task |
 | `GET` | `/api/archive?q=&page=&pageSize=` | Search archived tasks |
 | `GET` | `/api/archive/{id}` | Get archived task |
 | `PATCH` | `/api/archive/{id}/restore` | Restore archived task to active |
+| `DELETE` | `/api/archive/{id}` | Permanently delete archived task |
+| `DELETE` | `/api/archive/purge` | Purge all archived tasks |
 
 **SignalR Hub:** `/hubs/tasks` — pushes `TaskClosed`, `TaskRestored`, `TaskUpdated` events.
 
@@ -78,30 +81,30 @@ npm run dev
 - `Name` (string, max 200)
 - `Description` (string?, max 2000)
 - `CompletionDate` (DateOnly)
-- `Status` (Open | Closed | Reopened)
-- `CreatedAt`, `ClosedAt?`, `ReopenedAt?`
+- `Status` (Open | InProgress | Closed | Reopened)
+- `CreatedAt`, `StartedAt?`, `ClosedAt?`, `ReopenedAt?`
 
-**State machine:** Open → Closed, Closed → Reopened, Reopened → Closed. Invalid transitions return 409.
+**State machine:** Open → InProgress, InProgress → Closed, Closed → Reopened, Reopened → InProgress. Invalid transitions return 409.
 
 ## Event-Driven Archival
 
-1. Close task → marks Closed in active InMemory store → publishes `TaskClosedEvent` to Channel
-2. `TaskArchiveWorker` (BackgroundService) reads from Channel → moves task from InMemory to SQLite
+1. Close task (must be InProgress) → marks Closed in active store (`active.db`) → publishes `TaskClosedEvent` to Channel
+2. `TaskArchiveWorker` (BackgroundService) reads from Channel → moves task from `active.db` to `archive.db`
 3. SignalR notifies all connected clients → TanStack Query cache invalidated → UI updates
 
 ## Frontend Views
 
-- **Board** (default) — Trello-style columns: Open, Reopened, Closed. Drag tasks between columns.
-- **List** — Two-section layout: Active tasks + Recently closed
-- **Archive** — Search input + paginated results + Restore button
+- **Board** (default) — Trello-style columns: Open, In Progress, Reopened, Closed. Drag tasks between columns. Tasks sorted by due date.
+- **List** — Two-section layout: Active tasks (with due dates) + Recently closed
+- **Archive** — Search input + paginated results (with due dates) + Restore button
 
 ## Tests
 
-68 tests across 4 projects:
-- **Domain** (25) — Entity creation, state transitions, validation rules
-- **Application** (21) — Service methods with mocked repos, validators, mapping
+80 tests across 4 projects:
+- **Domain** (33) — Entity creation, state transitions, validation rules
+- **Application** (23) — Service methods with mocked repos, validators, mapping
 - **Infrastructure** (14) — Repository CRUD, search/pagination, channel pub/sub
-- **Api** (8) — Integration tests: endpoint contracts, status codes, validation
+- **Api** (10) — Integration tests: endpoint contracts, status codes, validation
 
 ```bash
 dotnet test --verbosity normal
@@ -133,7 +136,7 @@ lemontodo/
 
 ## Assumptions & Trade-offs
 
-- **InMemory = volatile** — Active tasks are lost on API restart. Acceptable for iteration 1; future: seed from SQLite on startup.
+- **Dual SQLite stores** — Both active (`active.db`) and archive (`archive.db`) use SQLite. Active tasks persist across API restarts and crashes.
 - **System.Threading.Channels over MediatR** — Simpler for single producer-consumer; would add MediatR if event taxonomy grows.
 - **Manual DTO mapping** — Transparent, type-safe, no AutoMapper magic.
 - **No authentication** — Planned for iteration 2 (current work in progress on the 'user-account' branch in the GitHub).
@@ -142,7 +145,7 @@ lemontodo/
 ## Future Features
 
 - User accounts with OAuth2 (Google and GitHub), 2FA, and API key authorization, with an account management dashboard.
-- AI agent MVC layer with gRPC - agents can use this visual kanban to enable human-in-the-loop (HITL) interactions.
-- Persistent active store (switch to scalable, performant and robust cloud data store)
+- AI agent MVC layer with gRPC - agents can use this visual kanban for task tracking to enable human-in-the-loop (HITL) interactions.
+- Scalable cloud data store (replace local SQLite with a robust, distributed solution)
 - Task priorities, categories and labels - almost Jira-like features for a wide range of use cases.
 - Due date reminders (email and/or text) - an essential feature included in most productivity apps.

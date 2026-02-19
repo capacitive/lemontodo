@@ -33,9 +33,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-// EF Core - Active (InMemory)
+// EF Core - Active (SQLite)
+var activePath = Path.Combine(builder.Environment.ContentRootPath, "active.db");
 builder.Services.AddDbContext<ActiveDbContext>(opt =>
-    opt.UseInMemoryDatabase("ActiveTasks"));
+    opt.UseSqlite($"Data Source={activePath}"));
 
 // EF Core - Archive (SQLite)
 var sqlitePath = Path.Combine(builder.Environment.ContentRootPath, "archive.db");
@@ -62,21 +63,26 @@ builder.Services.AddHostedService<TaskArchiveWorker>();
 
 var app = builder.Build();
 
-// Ensure archive DB schema is current (recreate if model changed)
+// Ensure DB schemas are current (recreate if model changed)
 using (var scope = app.Services.CreateScope())
 {
+    var activeDb = scope.ServiceProvider.GetRequiredService<ActiveDbContext>();
     var archiveDb = scope.ServiceProvider.GetRequiredService<ArchiveDbContext>();
-    if (archiveDb.Database.EnsureCreated() == false)
+
+    foreach (var db in new DbContext[] { activeDb, archiveDb })
     {
-        // DB exists — check if schema matches model by testing for new columns
-        try
+        if (db.Database.EnsureCreated() == false)
         {
-            archiveDb.Database.ExecuteSqlRaw("SELECT StartedAt FROM Tasks LIMIT 0");
-        }
-        catch
-        {
-            archiveDb.Database.EnsureDeleted();
-            archiveDb.Database.EnsureCreated();
+            // DB exists — check if schema matches model by testing for new columns
+            try
+            {
+                db.Database.ExecuteSqlRaw("SELECT StartedAt FROM Tasks LIMIT 0");
+            }
+            catch
+            {
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+            }
         }
     }
 }
