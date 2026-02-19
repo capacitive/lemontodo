@@ -149,3 +149,4 @@ lemontodo/
 - Scalable cloud data store (replace local SQLite with a robust, distributed solution)
 - Task priorities, categories and labels - almost Jira-like features for a wide range of use cases.
 - Due date reminders (email and/or text) - an essential feature included in most productivity apps.
+- CSS modules that enable configurable style preferences for users (dark mode light mode, or high contrast, for example)

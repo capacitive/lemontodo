@@ -71,7 +71,7 @@ public static class AuthEndpoints
             IAuthService svc, CancellationToken ct) =>
         {
             // TODO: Exchange code for token, extract user info, call OAuthLoginAsync
-            return Results.StatusCode(501);
+            return await Task.FromResult(Results.StatusCode(501));
         });
 
         group.MapGet("/github", (HttpContext ctx) =>
@@ -84,7 +84,7 @@ public static class AuthEndpoints
             IAuthService svc, CancellationToken ct) =>
         {
             // TODO: Exchange code for token, extract user info, call OAuthLoginAsync
-            return Results.StatusCode(501);
+            return await Task.FromResult(Results.StatusCode(501));
         });
     }
 }
