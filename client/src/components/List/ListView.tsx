@@ -31,10 +31,13 @@ export function ListView() {
   };
 
   const active = tasks?.filter((t) => t.status !== 'Closed') ?? [];
+  const byDueDate = (a: TaskResponse, b: TaskResponse) =>
+    a.completionDate.localeCompare(b.completionDate);
+
   const recentlyClosed = [
     ...(tasks?.filter((t) => t.status === 'Closed') ?? []),
     ...archivedTasks,
-  ];
+  ].sort(byDueDate);
 
   return (
     <div style={{ padding: 24, maxWidth: 700, margin: '0 auto' }}>
@@ -85,7 +88,10 @@ export function ListView() {
                 <span style={{ textDecoration: 'line-through' }}>{task.name}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-                    {task.closedAt ? new Date(task.closedAt).toLocaleDateString() : ''}
+                    Due: {task.completionDate}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                    Closed: {task.closedAt ? new Date(task.closedAt).toLocaleDateString() : ''}
                   </span>
                   <button
                     onClick={() => handleReopen(task.id)}

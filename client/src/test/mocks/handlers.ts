@@ -29,6 +29,16 @@ let mockTasks: Task[] = [
 
 let mockArchive: Task[] = [
   {
+    id: 'archived-task-2',
+    name: 'Archived Task Later',
+    description: 'Newer archived task',
+    completionDate: '2026-02-15',
+    status: 'Closed',
+    createdAt: '2026-02-01T10:00:00Z',
+    closedAt: '2026-02-10T15:00:00Z',
+    reopenedAt: null,
+  },
+  {
     id: 'archived-task-1',
     name: 'Archived Task',
     description: 'Old task',
@@ -192,6 +202,16 @@ export function resetMockData() {
   ];
 
   mockArchive = [
+    {
+      id: 'archived-task-2',
+      name: 'Archived Task Later',
+      description: 'Newer archived task',
+      completionDate: '2026-02-15',
+      status: 'Closed',
+      createdAt: '2026-02-01T10:00:00Z',
+      closedAt: '2026-02-10T15:00:00Z',
+      reopenedAt: null,
+    },
     {
       id: 'archived-task-1',
       name: 'Archived Task',

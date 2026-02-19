@@ -132,9 +132,28 @@ describe('BoardView', () => {
     await waitFor(() => {
       expect(screen.getByText('Test Task 2')).toBeInTheDocument();
       expect(screen.getByText('Archived Task')).toBeInTheDocument();
+      expect(screen.getByText('Archived Task Later')).toBeInTheDocument();
     });
 
     const reopenButtons = screen.getAllByText('Reopen');
-    expect(reopenButtons).toHaveLength(2);
+    expect(reopenButtons).toHaveLength(3);
+  });
+
+  it('should sort closed column tasks by due date ascending', async () => {
+    render(<BoardView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Archived Task')).toBeInTheDocument();
+      expect(screen.getByText('Archived Task Later')).toBeInTheDocument();
+      expect(screen.getByText('Test Task 2')).toBeInTheDocument();
+    });
+
+    // Due dates: Archived Task (2026-01-01), Archived Task Later (2026-02-15), Test Task 2 (2026-03-15)
+    const taskNames = Array.from(document.querySelectorAll('strong')).map((el) => el.textContent);
+    const i1 = taskNames.indexOf('Archived Task');
+    const i2 = taskNames.indexOf('Archived Task Later');
+    const i3 = taskNames.indexOf('Test Task 2');
+    expect(i1).toBeLessThan(i2);
+    expect(i2).toBeLessThan(i3);
   });
 });

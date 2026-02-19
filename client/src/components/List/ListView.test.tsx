@@ -106,9 +106,45 @@ describe('ListView', () => {
     await waitFor(() => {
       expect(screen.getByText('Test Task 2')).toBeInTheDocument();
       expect(screen.getByText('Archived Task')).toBeInTheDocument();
+      expect(screen.getByText('Archived Task Later')).toBeInTheDocument();
     });
 
     const reopenButtons = screen.getAllByText('Reopen');
-    expect(reopenButtons).toHaveLength(2);
+    expect(reopenButtons).toHaveLength(3);
+  });
+
+  it('should display both due date and closed date for recently closed tasks', async () => {
+    render(<ListView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Archived Task')).toBeInTheDocument();
+    });
+
+    // Recently closed section should show "Due:" and "Closed:" labels
+    expect(screen.getByText('Due: 2026-01-01')).toBeInTheDocument();
+    expect(screen.getByText('Due: 2026-02-15')).toBeInTheDocument();
+    expect(screen.getAllByText(/Closed:/).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('should sort recently closed tasks by due date ascending', async () => {
+    render(<ListView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Archived Task')).toBeInTheDocument();
+      expect(screen.getByText('Archived Task Later')).toBeInTheDocument();
+      expect(screen.getByText('Test Task 2')).toBeInTheDocument();
+    });
+
+    // In recently closed section, items with line-through text are the task names
+    const closedNames = Array.from(document.querySelectorAll('span'))
+      .filter((el) => el.style.textDecoration === 'line-through')
+      .map((el) => el.textContent);
+
+    // Due dates: Archived Task (2026-01-01), Archived Task Later (2026-02-15), Test Task 2 (2026-03-15)
+    const i1 = closedNames.indexOf('Archived Task');
+    const i2 = closedNames.indexOf('Archived Task Later');
+    const i3 = closedNames.indexOf('Test Task 2');
+    expect(i1).toBeLessThan(i2);
+    expect(i2).toBeLessThan(i3);
   });
 });

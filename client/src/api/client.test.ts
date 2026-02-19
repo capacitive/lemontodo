@@ -80,14 +80,14 @@ describe('archiveApi', () => {
   describe('search', () => {
     it('should search archived tasks', async () => {
       const result = await archiveApi.search('', 1, 20);
-      expect(result.items).toHaveLength(1);
-      expect(result.items[0].name).toBe('Archived Task');
-      expect(result.totalCount).toBe(1);
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].name).toBe('Archived Task Later');
+      expect(result.totalCount).toBe(2);
     });
 
     it('should filter by search query', async () => {
       const result = await archiveApi.search('Archived', 1, 20);
-      expect(result.items).toHaveLength(1);
+      expect(result.items).toHaveLength(2);
 
       const noResults = await archiveApi.search('nonexistent', 1, 20);
       expect(noResults.items).toHaveLength(0);

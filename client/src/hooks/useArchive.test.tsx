@@ -26,9 +26,9 @@ describe('useArchiveSearch', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.data?.items).toHaveLength(1);
-    expect(result.current.data?.items[0].name).toBe('Archived Task');
-    expect(result.current.data?.totalCount).toBe(1);
+    expect(result.current.data?.items).toHaveLength(2);
+    expect(result.current.data?.items[0].name).toBe('Archived Task Later');
+    expect(result.current.data?.totalCount).toBe(2);
   });
 
   it('should filter by search query', async () => {
@@ -38,7 +38,7 @@ describe('useArchiveSearch', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.data?.items).toHaveLength(1);
+    expect(result.current.data?.items).toHaveLength(2);
   });
 
   it('should return no results for non-matching query', async () => {

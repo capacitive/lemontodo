@@ -54,13 +54,16 @@ export function BoardView() {
   if (isLoading) return <div style={{ padding: 24, textAlign: 'center' }}>Loading...</div>;
   if (error) return <div style={{ padding: 24, color: '#dc2626' }}>Error loading tasks</div>;
 
+  const byDueDate = (a: TaskResponse, b: TaskResponse) =>
+    a.completionDate.localeCompare(b.completionDate);
+
   const grouped = Object.fromEntries(
     columns.map(({ status }) => {
       const active = tasks?.filter((t) => t.status === status) ?? [];
       if (status === 'Closed') {
-        return [status, [...active, ...archivedTasks]];
+        return [status, [...active, ...archivedTasks].sort(byDueDate)];
       }
-      return [status, active];
+      return [status, [...active].sort(byDueDate)];
     })
   ) as Record<TodoTaskStatus, TaskResponse[]>;
 

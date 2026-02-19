@@ -75,7 +75,7 @@ export function ArchiveView() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {data.items.map((task) => (
+            {[...data.items].sort((a, b) => a.completionDate.localeCompare(b.completionDate)).map((task) => (
               <div
                 key={task.id}
                 style={{
@@ -91,8 +91,9 @@ export function ArchiveView() {
                       {task.description}
                     </p>
                   )}
-                  <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: 4 }}>
-                    Closed: {task.closedAt ? new Date(task.closedAt).toLocaleDateString() : 'N/A'}
+                  <div style={{ display: 'flex', gap: 12, fontSize: '0.75rem', color: '#9ca3af', marginTop: 4 }}>
+                    <span>Due: {task.completionDate}</span>
+                    <span>Closed: {task.closedAt ? new Date(task.closedAt).toLocaleDateString() : 'N/A'}</span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
