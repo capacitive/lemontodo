@@ -8,6 +8,7 @@ namespace LemonTodo.Application.Tests;
 
 public class ArchiveServiceTests
 {
+    private const string UserId = "test-user-id";
     private readonly IArchiveTaskRepository _archiveRepo = Substitute.For<IArchiveTaskRepository>();
     private readonly IActiveTaskRepository _activeRepo = Substitute.For<IActiveTaskRepository>();
     private readonly ArchiveService _svc;
@@ -20,15 +21,28 @@ public class ArchiveServiceTests
     [Fact]
     public async Task GetById_WhenExists_ReturnsResponse()
     {
-        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1), userId: UserId);
         task.Start();
         task.Close();
         _archiveRepo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 
-        var result = await _svc.GetByIdAsync("id1");
+        var result = await _svc.GetByIdAsync(UserId, "id1");
 
         result.Should().NotBeNull();
         result!.Id.Should().Be("id1");
+    }
+
+    [Fact]
+    public async Task GetById_WhenDifferentUser_ReturnsNull()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1), userId: "other-user");
+        task.Start();
+        task.Close();
+        _archiveRepo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
+
+        var result = await _svc.GetByIdAsync(UserId, "id1");
+
+        result.Should().BeNull();
     }
 
     [Fact]
@@ -36,14 +50,14 @@ public class ArchiveServiceTests
     {
         var tasks = new List<TodoTask>
         {
-            TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1))
+            TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1), userId: UserId)
         };
         tasks[0].Start();
         tasks[0].Close();
         _archiveRepo.SearchAsync("task", 1, 10, Arg.Any<CancellationToken>())
             .Returns(((IReadOnlyList<TodoTask>)tasks, 1));
 
-        var result = await _svc.SearchAsync("task", 1, 10);
+        var result = await _svc.SearchAsync(UserId, "task", 1, 10);
 
         result.Items.Should().HaveCount(1);
         result.TotalCount.Should().Be(1);
@@ -53,12 +67,12 @@ public class ArchiveServiceTests
     [Fact]
     public async Task Restore_MovesFromArchiveToActive()
     {
-        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1), userId: UserId);
         task.Start();
         task.Close();
         _archiveRepo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 
-        var result = await _svc.RestoreAsync("id1");
+        var result = await _svc.RestoreAsync(UserId, "id1");
 
         result.Status.Should().Be("Reopened");
         await _activeRepo.Received(1).AddAsync(task, Arg.Any<CancellationToken>());
@@ -70,7 +84,7 @@ public class ArchiveServiceTests
     {
         _archiveRepo.GetByIdAsync("nope", Arg.Any<CancellationToken>()).Returns((TodoTask?)null);
 
-        var act = () => _svc.RestoreAsync("nope");
+        var act = () => _svc.RestoreAsync(UserId, "nope");
 
         await act.Should().ThrowAsync<KeyNotFoundException>();
     }

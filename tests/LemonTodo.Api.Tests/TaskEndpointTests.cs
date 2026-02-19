@@ -1,10 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using LemonTodo.Api.Tests.Helpers;
 using LemonTodo.Application.DTOs;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LemonTodo.Api.Tests;
 
@@ -17,6 +19,18 @@ public class TaskEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var testFactory = factory.WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Testing");
+            builder.ConfigureServices(services =>
+            {
+                services.AddAuthentication(TestAuthHandler.SchemeName)
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
+                        TestAuthHandler.SchemeName, _ => { });
+
+                services.PostConfigure<AuthenticationOptions>(o =>
+                {
+                    o.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+                    o.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+                });
+            });
         });
         _client = testFactory.CreateClient();
     }

@@ -13,5 +13,6 @@ public class TodoTaskConfiguration : IEntityTypeConfiguration<TodoTask>
         builder.Property(t => t.Name).IsRequired().HasMaxLength(200);
         builder.Property(t => t.Description).HasMaxLength(2000);
         builder.Property(t => t.Status).HasConversion<string>().HasMaxLength(20);
+        builder.Property(t => t.UserId).HasMaxLength(21).IsRequired(false);
     }
 }

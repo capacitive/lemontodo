@@ -11,12 +11,13 @@ public class TodoTask
     public TodoTaskStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? StartedAt { get; private set; }
+    public string? UserId { get; private set; }
     public DateTime? ClosedAt { get; private set; }
     public DateTime? ReopenedAt { get; private set; }
 
     private TodoTask() { }
 
-    public static TodoTask Create(string id, string name, string? description, DateOnly completionDate, DateTime? createdAt = null)
+    public static TodoTask Create(string id, string name, string? description, DateOnly completionDate, DateTime? createdAt = null, string? userId = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -34,7 +35,8 @@ public class TodoTask
             Description = description,
             CompletionDate = completionDate,
             Status = TodoTaskStatus.Open,
-            CreatedAt = createdAt ?? DateTime.UtcNow
+            CreatedAt = createdAt ?? DateTime.UtcNow,
+            UserId = userId
         };
     }
 
