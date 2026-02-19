@@ -9,6 +9,7 @@ import { ArchiveView } from './components/Archive/ArchiveView';
 import { ProfileView } from './components/Account/ProfileView';
 import { LoginView } from './components/Auth/LoginView';
 import { RegisterView } from './components/Auth/RegisterView';
+import { OAuthCallback } from './components/Auth/OAuthCallback';
 import { useSignalR } from './hooks/useSignalR';
 import type { ViewMode } from './types';
 
@@ -44,6 +45,11 @@ function UnauthenticatedApp() {
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
+
+  // Handle OAuth callback route
+  if (window.location.pathname === '/auth/callback') {
+    return <OAuthCallback />;
+  }
 
   if (isLoading) {
     return (

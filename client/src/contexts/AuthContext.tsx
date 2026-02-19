@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { authApi } from '../api/authApi';
+import { authApi, accountApi } from '../api/authApi';
 import { setAccessToken, getAccessToken } from '../api/client';
 import type { UserProfile, LoginRequest, RegisterRequest } from '../types/auth';
 
@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (req: LoginRequest) => Promise<{ requiresTwoFactor: boolean }>;
+  loginWithTokens: (accessToken: string, newRefreshToken: string) => Promise<void>;
   register: (req: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -30,6 +31,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshToken = response.refreshToken;
     setUser(response.user);
     return { requiresTwoFactor: false };
+  }, []);
+
+  const loginWithTokens = useCallback(async (accessToken: string, newRefreshToken: string) => {
+    setAccessToken(accessToken);
+    refreshToken = newRefreshToken;
+    const profile = await accountApi.getProfile();
+    setUser(profile);
   }, []);
 
   const register = useCallback(async (req: RegisterRequest) => {
@@ -87,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!user && !!getAccessToken(),
       isLoading,
       login,
+      loginWithTokens,
       register,
       logout,
       refreshUser,
