@@ -10,6 +10,7 @@ namespace LemonTodo.Application.Tests;
 
 public class TaskServiceTests
 {
+    private const string UserId = "test-user-id";
     private readonly IActiveTaskRepository _repo = Substitute.For<IActiveTaskRepository>();
     private readonly IIdGenerator _idGen = Substitute.For<IIdGenerator>();
     private readonly ITaskEventChannel _channel = Substitute.For<ITaskEventChannel>();
@@ -26,21 +27,21 @@ public class TaskServiceTests
     {
         var request = new CreateTaskRequest("Buy groceries", "Milk", new DateOnly(2026, 3, 1));
 
-        var result = await _svc.CreateAsync(request);
+        var result = await _svc.CreateAsync(UserId, request);
 
         result.Id.Should().Be("test-id-123");
         result.Name.Should().Be("Buy groceries");
         result.Status.Should().Be("Open");
-        await _repo.Received(1).AddAsync(Arg.Is<TodoTask>(t => t.Id == "test-id-123"), Arg.Any<CancellationToken>());
+        await _repo.Received(1).AddAsync(Arg.Is<TodoTask>(t => t.Id == "test-id-123" && t.UserId == UserId), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task GetById_WhenExists_ReturnsResponse()
     {
-        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1), userId: UserId);
         _repo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 
-        var result = await _svc.GetByIdAsync("id1");
+        var result = await _svc.GetByIdAsync(UserId, "id1");
 
         result.Should().NotBeNull();
         result!.Id.Should().Be("id1");
@@ -51,7 +52,18 @@ public class TaskServiceTests
     {
         _repo.GetByIdAsync("nope", Arg.Any<CancellationToken>()).Returns((TodoTask?)null);
 
-        var result = await _svc.GetByIdAsync("nope");
+        var result = await _svc.GetByIdAsync(UserId, "nope");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetById_WhenDifferentUser_ReturnsNull()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1), userId: "other-user");
+        _repo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
+
+        var result = await _svc.GetByIdAsync(UserId, "id1");
 
         result.Should().BeNull();
     }
@@ -61,12 +73,13 @@ public class TaskServiceTests
     {
         var tasks = new List<TodoTask>
         {
-            TodoTask.Create("id1", "A", null, new DateOnly(2026, 3, 1)),
-            TodoTask.Create("id2", "B", null, new DateOnly(2026, 3, 1))
+            TodoTask.Create("id1", "A", null, new DateOnly(2026, 3, 1), userId: UserId),
+            TodoTask.Create("id2", "B", null, new DateOnly(2026, 3, 1), userId: UserId),
+            TodoTask.Create("id3", "C", null, new DateOnly(2026, 3, 1), userId: "other-user")
         };
         _repo.GetAllAsync(Arg.Any<CancellationToken>()).Returns(tasks);
 
-        var result = await _svc.GetAllAsync();
+        var result = await _svc.GetAllAsync(UserId);
 
         result.Should().HaveCount(2);
     }
@@ -74,10 +87,10 @@ public class TaskServiceTests
     [Fact]
     public async Task Update_WhenExists_UpdatesAndReturns()
     {
-        var task = TodoTask.Create("id1", "Old", null, new DateOnly(2026, 3, 1));
+        var task = TodoTask.Create("id1", "Old", null, new DateOnly(2026, 3, 1), userId: UserId);
         _repo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 
-        var result = await _svc.UpdateAsync("id1", new UpdateTaskRequest("New", "Desc", new DateOnly(2026, 4, 1)));
+        var result = await _svc.UpdateAsync(UserId, "id1", new UpdateTaskRequest("New", "Desc", new DateOnly(2026, 4, 1)));
 
         result.Name.Should().Be("New");
         result.Description.Should().Be("Desc");
@@ -89,7 +102,7 @@ public class TaskServiceTests
     {
         _repo.GetByIdAsync("nope", Arg.Any<CancellationToken>()).Returns((TodoTask?)null);
 
-        var act = () => _svc.UpdateAsync("nope", new UpdateTaskRequest("Name", null, new DateOnly(2026, 3, 1)));
+        var act = () => _svc.UpdateAsync(UserId, "nope", new UpdateTaskRequest("Name", null, new DateOnly(2026, 3, 1)));
 
         await act.Should().ThrowAsync<KeyNotFoundException>();
     }
@@ -97,10 +110,10 @@ public class TaskServiceTests
     [Fact]
     public async Task Close_SetsClosedAndPublishesEvent()
     {
-        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1), userId: UserId);
         _repo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 
-        var result = await _svc.CloseAsync("id1");
+        var result = await _svc.CloseAsync(UserId, "id1");
 
         result.Status.Should().Be("Closed");
         await _channel.Received(1).PublishAsync(Arg.Is<TaskClosedEvent>(e => e.TaskId == "id1"), Arg.Any<CancellationToken>());
@@ -109,11 +122,11 @@ public class TaskServiceTests
     [Fact]
     public async Task Reopen_SetsReopenedStatus()
     {
-        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1), userId: UserId);
         task.Close();
         _repo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 
-        var result = await _svc.ReopenAsync("id1");
+        var result = await _svc.ReopenAsync(UserId, "id1");
 
         result.Status.Should().Be("Reopened");
         await _repo.Received(1).UpdateAsync(task, Arg.Any<CancellationToken>());

@@ -20,53 +20,59 @@ public class TaskService : ITaskService
         _channel = channel;
     }
 
-    public async Task<TaskResponse> CreateAsync(CreateTaskRequest request, CancellationToken ct = default)
+    public async Task<TaskResponse> CreateAsync(string userId, CreateTaskRequest request, CancellationToken ct = default)
     {
-        var task = TodoTask.Create(_idGen.NewId(), request.Name, request.Description, request.CompletionDate);
+        var task = TodoTask.Create(_idGen.NewId(), request.Name, request.Description, request.CompletionDate, userId: userId);
         await _repo.AddAsync(task, ct);
         return task.ToResponse();
     }
 
-    public async Task<TaskResponse?> GetByIdAsync(string id, CancellationToken ct = default)
+    public async Task<TaskResponse?> GetByIdAsync(string userId, string id, CancellationToken ct = default)
     {
         var task = await _repo.GetByIdAsync(id, ct);
-        return task?.ToResponse();
+        if (task is null || task.UserId != userId) return null;
+        return task.ToResponse();
     }
 
-    public async Task<IReadOnlyList<TaskResponse>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<TaskResponse>> GetAllAsync(string userId, CancellationToken ct = default)
     {
         var tasks = await _repo.GetAllAsync(ct);
-        return tasks.Select(t => t.ToResponse()).ToList();
+        return tasks.Where(t => t.UserId == userId).Select(t => t.ToResponse()).ToList();
     }
 
-    public async Task<TaskResponse> UpdateAsync(string id, UpdateTaskRequest request, CancellationToken ct = default)
+    public async Task<TaskResponse> UpdateAsync(string userId, string id, UpdateTaskRequest request, CancellationToken ct = default)
     {
-        var task = await _repo.GetByIdAsync(id, ct)
-            ?? throw new KeyNotFoundException($"Task '{id}' not found.");
-
+        var task = await GetOwnedTaskAsync(userId, id, ct);
         task.Update(request.Name, request.Description, request.CompletionDate);
         await _repo.UpdateAsync(task, ct);
         return task.ToResponse();
     }
 
-    public async Task<TaskResponse> CloseAsync(string id, CancellationToken ct = default)
+    public async Task<TaskResponse> CloseAsync(string userId, string id, CancellationToken ct = default)
     {
-        var task = await _repo.GetByIdAsync(id, ct)
-            ?? throw new KeyNotFoundException($"Task '{id}' not found.");
-
+        var task = await GetOwnedTaskAsync(userId, id, ct);
         task.Close();
         await _repo.UpdateAsync(task, ct);
         await _channel.PublishAsync(new TaskClosedEvent(task.Id, DateTime.UtcNow), ct);
         return task.ToResponse();
     }
 
-    public async Task<TaskResponse> ReopenAsync(string id, CancellationToken ct = default)
+    public async Task<TaskResponse> ReopenAsync(string userId, string id, CancellationToken ct = default)
+    {
+        var task = await GetOwnedTaskAsync(userId, id, ct);
+        task.Reopen();
+        await _repo.UpdateAsync(task, ct);
+        return task.ToResponse();
+    }
+
+    private async Task<TodoTask> GetOwnedTaskAsync(string userId, string id, CancellationToken ct)
     {
         var task = await _repo.GetByIdAsync(id, ct)
             ?? throw new KeyNotFoundException($"Task '{id}' not found.");
 
-        task.Reopen();
-        await _repo.UpdateAsync(task, ct);
-        return task.ToResponse();
+        if (task.UserId != userId)
+            throw new KeyNotFoundException($"Task '{id}' not found.");
+
+        return task;
     }
 }
