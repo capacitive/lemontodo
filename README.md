@@ -139,7 +139,7 @@ lemontodo/
 - **Dual SQLite stores** — Both active (`active.db`) and archive (`archive.db`) use SQLite. Active tasks persist across API restarts and crashes.
 - **System.Threading.Channels over MediatR** — Simpler for single producer-consumer; would add MediatR if event taxonomy grows.
 - **Manual DTO mapping** — Transparent, type-safe, no AutoMapper magic.
-- **No authentication** — Planned for iteration 2 (current work in progress on the 'user-account' branch in the GitHub).
+- **No authentication** — Planned for iteration 2 (current work in progress is in the 'dev-accounts' branch).
 - **Inline styles** — Fast iteration; a real app would use CSS modules or Tailwind.
 
 ## Future Features
