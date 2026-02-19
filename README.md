@@ -145,7 +145,14 @@ lemontodo/
 ## Future Features
 
 - User accounts with OAuth2 (Google and GitHub), 2FA, and API key authorization, with an account management dashboard.
-- AI agent MVC layer with gRPC - agents can use this visual kanban for task tracking to enable human-in-the-loop (HITL) interactions.
-- Scalable cloud data store (replace local SQLite with a robust, distributed solution)
+- MVC layer with gRPC - AI agents can use this visual kanban for task tracking to enable human-in-the-loop (HITL) interactions.
 - Task priorities, categories and labels - almost Jira-like features for a wide range of use cases.
 - Due date reminders (email and/or text) - an essential feature included in most productivity apps.
+- CSS module or Tailwind enabled profile preference features configured on the admin panel - dark/light mode, custom backgrounds, etc. 
+
+## Infrastructure for distributed scale
+
+- Scalable cloud data store (replace local SQLite with a robust, distributed solution).
+- Containerize using docker compose.
+- Add automated workflow yaml for GitHub Actions or Gitlab runner pipeline.
+- Utilize Terraform HCL with Helm provider to support deployment to Kubernetes. 
