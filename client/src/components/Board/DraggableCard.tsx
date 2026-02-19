@@ -5,12 +5,13 @@ import { TaskCard } from '../Task/TaskCard';
 
 interface DraggableCardProps {
   task: TaskResponse;
+  onStart: () => void;
   onClose: () => void;
   onReopen: () => void;
   onEdit: () => void;
 }
 
-export function DraggableCard({ task, onClose, onReopen, onEdit }: DraggableCardProps) {
+export function DraggableCard({ task, onStart, onClose, onReopen, onEdit }: DraggableCardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: task.id,
   });
@@ -26,7 +27,7 @@ export function DraggableCard({ task, onClose, onReopen, onEdit }: DraggableCard
       >
         ⠿ drag
       </div>
-      <TaskCard task={task} onClose={onClose} onReopen={onReopen} onEdit={onEdit} draggable />
+      <TaskCard task={task} onStart={onStart} onClose={onClose} onReopen={onReopen} onEdit={onEdit} draggable showStatus={false} />
     </div>
   );
 }

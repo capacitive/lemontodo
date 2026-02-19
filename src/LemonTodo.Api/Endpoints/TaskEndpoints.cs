@@ -52,6 +52,23 @@ public static class TaskEndpoints
             }
         });
 
+        group.MapPatch("/{id}/start", async (string id, ITaskService svc, CancellationToken ct) =>
+        {
+            try
+            {
+                var task = await svc.StartAsync(id, ct);
+                return Results.Ok(task);
+            }
+            catch (KeyNotFoundException)
+            {
+                return Results.NotFound();
+            }
+            catch (InvalidTransitionException ex)
+            {
+                return Results.Conflict(new { error = ex.Message });
+            }
+        });
+
         group.MapPatch("/{id}/close", async (string id, ITaskService svc, CancellationToken ct) =>
         {
             try

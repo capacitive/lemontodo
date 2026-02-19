@@ -7,12 +7,13 @@ interface BoardColumnProps {
   label: string;
   color: string;
   tasks: TaskResponse[];
+  onStart: (id: string) => void;
   onClose: (id: string) => void;
   onReopen: (id: string) => void;
   onEdit: (task: TaskResponse) => void;
 }
 
-export function BoardColumn({ status, label, color, tasks, onClose, onReopen, onEdit }: BoardColumnProps) {
+export function BoardColumn({ status, label, color, tasks, onStart, onClose, onReopen, onEdit }: BoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
@@ -52,6 +53,7 @@ export function BoardColumn({ status, label, color, tasks, onClose, onReopen, on
           <DraggableCard
             key={task.id}
             task={task}
+            onStart={() => onStart(task.id)}
             onClose={() => onClose(task.id)}
             onReopen={() => onReopen(task.id)}
             onEdit={() => onEdit(task)}

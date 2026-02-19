@@ -10,6 +10,7 @@ public class TodoTask
     public DateOnly CompletionDate { get; private set; }
     public TodoTaskStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
+    public DateTime? StartedAt { get; private set; }
     public DateTime? ClosedAt { get; private set; }
     public DateTime? ReopenedAt { get; private set; }
 
@@ -37,9 +38,18 @@ public class TodoTask
         };
     }
 
-    public void Close(DateTime? closedAt = null)
+    public void Start(DateTime? startedAt = null)
     {
         if (Status is not (TodoTaskStatus.Open or TodoTaskStatus.Reopened))
+            throw new InvalidTransitionException(Status, TodoTaskStatus.InProgress);
+
+        Status = TodoTaskStatus.InProgress;
+        StartedAt = startedAt ?? DateTime.UtcNow;
+    }
+
+    public void Close(DateTime? closedAt = null)
+    {
+        if (Status is not TodoTaskStatus.InProgress)
             throw new InvalidTransitionException(Status, TodoTaskStatus.Closed);
 
         Status = TodoTaskStatus.Closed;

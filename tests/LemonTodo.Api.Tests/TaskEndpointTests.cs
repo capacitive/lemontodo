@@ -91,17 +91,44 @@ public class TaskEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task CloseTask_Returns200()
+    public async Task StartTask_Returns200()
+    {
+        var createReq = new CreateTaskRequest("To start", null, new DateOnly(2026, 3, 1));
+        var createResp = await _client.PostAsJsonAsync("/api/tasks", createReq);
+        var created = await createResp.Content.ReadFromJsonAsync<TaskResponse>();
+
+        var response = await _client.PatchAsync($"/api/tasks/{created!.Id}/start", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var task = await response.Content.ReadFromJsonAsync<TaskResponse>();
+        task!.Status.Should().Be("InProgress");
+    }
+
+    [Fact]
+    public async Task CloseTask_AfterStart_Returns200()
     {
         var createReq = new CreateTaskRequest("To close", null, new DateOnly(2026, 3, 1));
         var createResp = await _client.PostAsJsonAsync("/api/tasks", createReq);
         var created = await createResp.Content.ReadFromJsonAsync<TaskResponse>();
 
-        var response = await _client.PatchAsync($"/api/tasks/{created!.Id}/close", null);
+        await _client.PatchAsync($"/api/tasks/{created!.Id}/start", null);
+        var response = await _client.PatchAsync($"/api/tasks/{created.Id}/close", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var task = await response.Content.ReadFromJsonAsync<TaskResponse>();
         task!.Status.Should().Be("Closed");
+    }
+
+    [Fact]
+    public async Task CloseOpenTask_Returns409()
+    {
+        var createReq = new CreateTaskRequest("Cannot close directly", null, new DateOnly(2026, 3, 1));
+        var createResp = await _client.PostAsJsonAsync("/api/tasks", createReq);
+        var created = await createResp.Content.ReadFromJsonAsync<TaskResponse>();
+
+        var response = await _client.PatchAsync($"/api/tasks/{created!.Id}/close", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 
     [Fact]

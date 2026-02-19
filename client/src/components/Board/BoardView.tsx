@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { TaskResponse, TodoTaskStatus } from '../../types';
-import { useTasks, useCloseTask, useReopenTask, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
+import { useTasks, useCloseTask, useReopenTask, useStartTask, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
 import { useArchiveSearch, useRestoreTask } from '../../hooks/useArchive';
 import { BoardColumn } from './BoardColumn';
 import { TaskModal } from '../Task/TaskModal';
@@ -9,13 +9,15 @@ import type { CreateTaskRequest, UpdateTaskRequest } from '../../types';
 
 const columns: { status: TodoTaskStatus; label: string; color: string }[] = [
   { status: 'Open', label: 'Open', color: '#16a34a' },
+  { status: 'InProgress', label: 'In Progress', color: '#f59e0b' },
+  { status: 'Closed', label: 'Done', color: '#dc2626' },
   { status: 'Reopened', label: 'Reopened', color: '#2563eb' },
-  { status: 'Closed', label: 'Closed', color: '#dc2626' },
 ];
 
 export function BoardView() {
   const { data: tasks, isLoading, error } = useTasks();
   const { data: archiveData } = useArchiveSearch('', 1, 100);
+  const startTask = useStartTask();
   const closeTask = useCloseTask();
   const reopenTask = useReopenTask();
   const restoreTask = useRestoreTask();
@@ -41,10 +43,14 @@ export function BoardView() {
 
     const taskId = active.id as string;
     const targetStatus = over.id as TodoTaskStatus;
-    const task = tasks.find((t) => t.id === taskId);
+    const allTasks = [...tasks, ...archivedTasks];
+    const task = allTasks.find((t) => t.id === taskId);
     if (!task || task.status === targetStatus) return;
 
-    if (targetStatus === 'Closed' && (task.status === 'Open' || task.status === 'Reopened')) {
+    // Valid drag transitions matching the state machine
+    if (targetStatus === 'InProgress' && (task.status === 'Open' || task.status === 'Reopened')) {
+      startTask.mutate(taskId);
+    } else if (targetStatus === 'Closed' && task.status === 'InProgress') {
       closeTask.mutate(taskId);
     } else if (targetStatus === 'Reopened' && task.status === 'Closed') {
       handleReopen(taskId);
@@ -84,7 +90,7 @@ export function BoardView() {
 
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
           gap: 16, padding: '0 24px 24px', minHeight: 'calc(100vh - 160px)',
         }}>
           {columns.map(({ status, label, color }) => (
@@ -94,6 +100,7 @@ export function BoardView() {
               label={label}
               color={color}
               tasks={grouped[status]}
+              onStart={(id) => startTask.mutate(id)}
               onClose={(id) => closeTask.mutate(id)}
               onReopen={handleReopen}
               onEdit={(task) => { setEditingTask(task); setShowModal(true); }}

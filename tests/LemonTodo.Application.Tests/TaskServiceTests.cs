@@ -95,9 +95,22 @@ public class TaskServiceTests
     }
 
     [Fact]
+    public async Task Start_SetsInProgressStatus()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        _repo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
+
+        var result = await _svc.StartAsync("id1");
+
+        result.Status.Should().Be("InProgress");
+        await _repo.Received(1).UpdateAsync(task, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Close_SetsClosedAndPublishesEvent()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
         _repo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 
         var result = await _svc.CloseAsync("id1");
@@ -110,6 +123,7 @@ public class TaskServiceTests
     public async Task Reopen_SetsReopenedStatus()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
         task.Close();
         _repo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 

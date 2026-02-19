@@ -20,14 +20,28 @@ public class MappingTests
         response.CompletionDate.Should().Be(new DateOnly(2026, 3, 1));
         response.Status.Should().Be("Open");
         response.CreatedAt.Should().Be(ts);
+        response.StartedAt.Should().BeNull();
         response.ClosedAt.Should().BeNull();
         response.ReopenedAt.Should().BeNull();
+    }
+
+    [Fact]
+    public void ToResponse_AfterStart_ReflectsInProgressStatus()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
+
+        var response = task.ToResponse();
+
+        response.Status.Should().Be("InProgress");
+        response.StartedAt.Should().NotBeNull();
     }
 
     [Fact]
     public void ToResponse_AfterClose_ReflectsClosedStatus()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
         task.Close();
 
         var response = task.ToResponse();

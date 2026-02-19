@@ -6,6 +6,7 @@ export const taskApi = {
   getById: (id: string) => api.get<TaskResponse>(`/tasks/${id}`),
   create: (req: CreateTaskRequest) => api.post<TaskResponse>('/tasks', req),
   update: (id: string, req: UpdateTaskRequest) => api.put<TaskResponse>(`/tasks/${id}`, req),
+  start: (id: string) => api.patch<TaskResponse>(`/tasks/${id}/start`),
   close: (id: string) => api.patch<TaskResponse>(`/tasks/${id}/close`),
   reopen: (id: string) => api.patch<TaskResponse>(`/tasks/${id}/reopen`),
 };

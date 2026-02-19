@@ -62,11 +62,23 @@ builder.Services.AddHostedService<TaskArchiveWorker>();
 
 var app = builder.Build();
 
-// Ensure archive DB created
+// Ensure archive DB schema is current (recreate if model changed)
 using (var scope = app.Services.CreateScope())
 {
     var archiveDb = scope.ServiceProvider.GetRequiredService<ArchiveDbContext>();
-    archiveDb.Database.EnsureCreated();
+    if (archiveDb.Database.EnsureCreated() == false)
+    {
+        // DB exists — check if schema matches model by testing for new columns
+        try
+        {
+            archiveDb.Database.ExecuteSqlRaw("SELECT StartedAt FROM Tasks LIMIT 0");
+        }
+        catch
+        {
+            archiveDb.Database.EnsureDeleted();
+            archiveDb.Database.EnsureCreated();
+        }
+    }
 }
 
 // Middleware

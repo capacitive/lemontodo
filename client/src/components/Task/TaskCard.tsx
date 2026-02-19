@@ -2,17 +2,27 @@ import type { TaskResponse } from '../../types';
 
 interface TaskCardProps {
   task: TaskResponse;
+  onStart?: () => void;
   onClose?: () => void;
   onReopen?: () => void;
   onEdit?: () => void;
   draggable?: boolean;
+  showStatus?: boolean;
 }
 
-export function TaskCard({ task, onClose, onReopen, onEdit, draggable }: TaskCardProps) {
+export function TaskCard({ task, onStart, onClose, onReopen, onEdit, draggable, showStatus = true }: TaskCardProps) {
   const statusColors: Record<string, string> = {
     Open: '#16a34a',
+    InProgress: '#f59e0b',
     Closed: '#dc2626',
     Reopened: '#2563eb',
+  };
+
+  const statusLabels: Record<string, string> = {
+    Open: 'Open',
+    InProgress: 'In Progress',
+    Closed: 'Closed',
+    Reopened: 'Reopened',
   };
 
   return (
@@ -25,14 +35,16 @@ export function TaskCard({ task, onClose, onReopen, onEdit, draggable }: TaskCar
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 4 }}>
         <strong style={{ fontSize: '0.95rem' }}>{task.name}</strong>
-        <span style={{
-          fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4,
-          background: statusColors[task.status] + '18',
-          color: statusColors[task.status],
-          fontWeight: 600,
-        }}>
-          {task.status}
-        </span>
+        {showStatus && (
+          <span style={{
+            fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4,
+            background: statusColors[task.status] + '18',
+            color: statusColors[task.status],
+            fontWeight: 600,
+          }}>
+            {statusLabels[task.status]}
+          </span>
+        )}
       </div>
 
       {task.description && (
@@ -49,8 +61,11 @@ export function TaskCard({ task, onClose, onReopen, onEdit, draggable }: TaskCar
         {onEdit && task.status !== 'Closed' && (
           <button onClick={onEdit} style={btnStyle('#f3f4f6', '#374151')}>Edit</button>
         )}
-        {task.status !== 'Closed' && onClose && (
-          <button onClick={onClose} style={btnStyle('#fee2e2', '#dc2626')}>Close</button>
+        {(task.status === 'Open' || task.status === 'Reopened') && onStart && (
+          <button onClick={onStart} style={btnStyle('#fef3c7', '#f59e0b')}>Start</button>
+        )}
+        {task.status === 'InProgress' && onClose && (
+          <button onClick={onClose} style={btnStyle('#fee2e2', '#dc2626')}>Done</button>
         )}
         {task.status === 'Closed' && onReopen && (
           <button onClick={onReopen} style={btnStyle('#dbeafe', '#2563eb')}>Reopen</button>

@@ -31,6 +31,7 @@ public class ArchiveTaskRepositoryTests : IDisposable
     private TodoTask CreateClosedTask(string id, string name, string? desc = null, DateTime? closedAt = null)
     {
         var task = TodoTask.Create(id, name, desc, new DateOnly(2026, 3, 1));
+        task.Start();
         task.Close(closedAt);
         return task;
     }

@@ -1,10 +1,10 @@
 import { http, HttpResponse } from 'msw';
-import type { Task, CreateTaskRequest, UpdateTaskRequest, PagedResponse } from '../../types';
+import type { TaskResponse, CreateTaskRequest, UpdateTaskRequest, PagedResponse } from '../../types';
 
 const BASE_URL = 'http://localhost:5175/api';
 
 // Mock data
-let mockTasks: Task[] = [
+let mockTasks: TaskResponse[] = [
   {
     id: 'test-task-1',
     name: 'Test Task 1',
@@ -12,6 +12,7 @@ let mockTasks: Task[] = [
     completionDate: '2026-03-01',
     status: 'Open',
     createdAt: '2026-02-16T10:00:00Z',
+    startedAt: null,
     closedAt: null,
     reopenedAt: null,
   },
@@ -22,12 +23,13 @@ let mockTasks: Task[] = [
     completionDate: '2026-03-15',
     status: 'Closed',
     createdAt: '2026-02-15T09:00:00Z',
+    startedAt: '2026-02-16T11:00:00Z',
     closedAt: '2026-02-16T12:00:00Z',
     reopenedAt: null,
   },
 ];
 
-let mockArchive: Task[] = [
+let mockArchive: TaskResponse[] = [
   {
     id: 'archived-task-2',
     name: 'Archived Task Later',
@@ -35,6 +37,7 @@ let mockArchive: Task[] = [
     completionDate: '2026-02-15',
     status: 'Closed',
     createdAt: '2026-02-01T10:00:00Z',
+    startedAt: '2026-02-09T10:00:00Z',
     closedAt: '2026-02-10T15:00:00Z',
     reopenedAt: null,
   },
@@ -45,6 +48,7 @@ let mockArchive: Task[] = [
     completionDate: '2026-01-01',
     status: 'Closed',
     createdAt: '2026-01-01T10:00:00Z',
+    startedAt: '2026-01-04T10:00:00Z',
     closedAt: '2026-01-05T15:00:00Z',
     reopenedAt: null,
   },
@@ -68,13 +72,14 @@ export const handlers = [
   // POST /api/tasks - Create task
   http.post(`${BASE_URL}/tasks`, async ({ request }) => {
     const body = (await request.json()) as CreateTaskRequest;
-    const newTask: Task = {
+    const newTask: TaskResponse = {
       id: `task-${Date.now()}`,
       name: body.name,
       description: body.description || null,
       completionDate: body.completionDate,
       status: 'Open',
       createdAt: new Date().toISOString(),
+      startedAt: null,
       closedAt: null,
       reopenedAt: null,
     };
@@ -97,14 +102,28 @@ export const handlers = [
     return HttpResponse.json(task);
   }),
 
+  // PATCH /api/tasks/:id/start - Start task
+  http.patch(`${BASE_URL}/tasks/:id/start`, ({ params }) => {
+    const task = mockTasks.find((t) => t.id === params.id);
+    if (!task) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    if (task.status !== 'Open' && task.status !== 'Reopened') {
+      return new HttpResponse(JSON.stringify({ error: 'Invalid transition' }), { status: 409 });
+    }
+    task.status = 'InProgress';
+    task.startedAt = new Date().toISOString();
+    return HttpResponse.json(task);
+  }),
+
   // PATCH /api/tasks/:id/close - Close task
   http.patch(`${BASE_URL}/tasks/:id/close`, ({ params }) => {
     const task = mockTasks.find((t) => t.id === params.id);
     if (!task) {
       return new HttpResponse(null, { status: 404 });
     }
-    if (task.status === 'Closed') {
-      return new HttpResponse(JSON.stringify({ error: 'Task is already closed' }), { status: 409 });
+    if (task.status !== 'InProgress') {
+      return new HttpResponse(JSON.stringify({ error: 'Can only close InProgress tasks' }), { status: 409 });
     }
     task.status = 'Closed';
     task.closedAt = new Date().toISOString();
@@ -142,12 +161,11 @@ export const handlers = [
     const start = (page - 1) * pageSize;
     const items = filtered.slice(start, start + pageSize);
 
-    const response: PagedResponse<Task> = {
+    const response: PagedResponse<TaskResponse> = {
       items,
       page,
       pageSize,
       totalCount: filtered.length,
-      totalPages: Math.ceil(filtered.length / pageSize),
     };
 
     return HttpResponse.json(response);
@@ -186,6 +204,7 @@ export function resetMockData() {
       completionDate: '2026-03-01',
       status: 'Open',
       createdAt: '2026-02-16T10:00:00Z',
+      startedAt: null,
       closedAt: null,
       reopenedAt: null,
     },
@@ -196,6 +215,7 @@ export function resetMockData() {
       completionDate: '2026-03-15',
       status: 'Closed',
       createdAt: '2026-02-15T09:00:00Z',
+      startedAt: '2026-02-16T11:00:00Z',
       closedAt: '2026-02-16T12:00:00Z',
       reopenedAt: null,
     },
@@ -209,6 +229,7 @@ export function resetMockData() {
       completionDate: '2026-02-15',
       status: 'Closed',
       createdAt: '2026-02-01T10:00:00Z',
+      startedAt: '2026-02-09T10:00:00Z',
       closedAt: '2026-02-10T15:00:00Z',
       reopenedAt: null,
     },
@@ -219,6 +240,7 @@ export function resetMockData() {
       completionDate: '2026-01-01',
       status: 'Closed',
       createdAt: '2026-01-01T10:00:00Z',
+      startedAt: '2026-01-04T10:00:00Z',
       closedAt: '2026-01-05T15:00:00Z',
       reopenedAt: null,
     },

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTasks, useCreateTask, useUpdateTask, useCloseTask, useReopenTask } from './useTasks';
+import { useTasks, useCreateTask, useUpdateTask, useStartTask, useCloseTask, useReopenTask } from './useTasks';
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -67,14 +67,28 @@ describe('useUpdateTask', () => {
   });
 });
 
-describe('useCloseTask', () => {
-  it('should close a task', async () => {
+describe('useStartTask', () => {
+  it('should start a task', async () => {
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useCloseTask(), { wrapper });
+    const { result } = renderHook(() => useStartTask(), { wrapper });
 
     result.current.mutate('test-task-1');
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+});
+
+describe('useCloseTask', () => {
+  it('should close a task', async () => {
+    const wrapper = createWrapper();
+    const { result: startResult } = renderHook(() => useStartTask(), { wrapper });
+    const { result: closeResult } = renderHook(() => useCloseTask(), { wrapper });
+
+    startResult.current.mutate('test-task-1');
+    await waitFor(() => expect(startResult.current.isSuccess).toBe(true));
+
+    closeResult.current.mutate('test-task-1');
+    await waitFor(() => expect(closeResult.current.isSuccess).toBe(true));
   });
 });
 

@@ -17,6 +17,7 @@ public class TodoTaskCreationTests
         task.CompletionDate.Should().Be(new DateOnly(2026, 3, 1));
         task.Status.Should().Be(TodoTaskStatus.Open);
         task.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(2));
+        task.StartedAt.Should().BeNull();
         task.ClosedAt.Should().BeNull();
         task.ReopenedAt.Should().BeNull();
     }
@@ -73,12 +74,77 @@ public class TodoTaskCreationTests
     }
 }
 
+public class TodoTaskStartTests
+{
+    [Fact]
+    public void Start_FromOpen_TransitionsToInProgress()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+
+        task.Start();
+
+        task.Status.Should().Be(TodoTaskStatus.InProgress);
+        task.StartedAt.Should().NotBeNull();
+        task.StartedAt!.Value.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public void Start_FromReopened_TransitionsToInProgress()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
+        task.Close();
+        task.Reopen();
+
+        task.Start();
+
+        task.Status.Should().Be(TodoTaskStatus.InProgress);
+    }
+
+    [Fact]
+    public void Start_FromInProgress_ThrowsInvalidTransition()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
+
+        var act = () => task.Start();
+
+        act.Should().Throw<InvalidTransitionException>()
+            .Where(e => e.From == TodoTaskStatus.InProgress && e.To == TodoTaskStatus.InProgress);
+    }
+
+    [Fact]
+    public void Start_FromClosed_ThrowsInvalidTransition()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
+        task.Close();
+
+        var act = () => task.Start();
+
+        act.Should().Throw<InvalidTransitionException>()
+            .Where(e => e.From == TodoTaskStatus.Closed && e.To == TodoTaskStatus.InProgress);
+    }
+
+    [Fact]
+    public void Start_WithExplicitTimestamp_UsesProvidedValue()
+    {
+        var ts = new DateTime(2026, 2, 1, 12, 0, 0, DateTimeKind.Utc);
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+
+        task.Start(ts);
+
+        task.StartedAt.Should().Be(ts);
+    }
+}
+
 public class TodoTaskCloseTests
 {
     [Fact]
-    public void Close_FromOpen_TransitionsToClosed()
+    public void Close_FromInProgress_TransitionsToClosed()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
 
         task.Close();
 
@@ -88,21 +154,35 @@ public class TodoTaskCloseTests
     }
 
     [Fact]
-    public void Close_FromReopened_TransitionsToClosed()
+    public void Close_FromOpen_ThrowsInvalidTransition()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+
+        var act = () => task.Close();
+
+        act.Should().Throw<InvalidTransitionException>()
+            .Where(e => e.From == TodoTaskStatus.Open && e.To == TodoTaskStatus.Closed);
+    }
+
+    [Fact]
+    public void Close_FromReopened_ThrowsInvalidTransition()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
         task.Close();
         task.Reopen();
 
-        task.Close();
+        var act = () => task.Close();
 
-        task.Status.Should().Be(TodoTaskStatus.Closed);
+        act.Should().Throw<InvalidTransitionException>()
+            .Where(e => e.From == TodoTaskStatus.Reopened && e.To == TodoTaskStatus.Closed);
     }
 
     [Fact]
     public void Close_FromClosed_ThrowsInvalidTransition()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
         task.Close();
 
         var act = () => task.Close();
@@ -116,6 +196,7 @@ public class TodoTaskCloseTests
     {
         var ts = new DateTime(2026, 2, 1, 12, 0, 0, DateTimeKind.Utc);
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
 
         task.Close(ts);
 
@@ -129,6 +210,7 @@ public class TodoTaskReopenTests
     public void Reopen_FromClosed_TransitionsToReopened()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
         task.Close();
 
         task.Reopen();
@@ -149,9 +231,22 @@ public class TodoTaskReopenTests
     }
 
     [Fact]
+    public void Reopen_FromInProgress_ThrowsInvalidTransition()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
+
+        var act = () => task.Reopen();
+
+        act.Should().Throw<InvalidTransitionException>()
+            .Where(e => e.From == TodoTaskStatus.InProgress && e.To == TodoTaskStatus.Reopened);
+    }
+
+    [Fact]
     public void Reopen_FromReopened_ThrowsInvalidTransition()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
         task.Close();
         task.Reopen();
 
@@ -211,5 +306,31 @@ public class TodoTaskUpdateTests
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
         var act = () => task.Update("Task", new string('x', 2001), new DateOnly(2026, 3, 1));
         act.Should().Throw<ArgumentException>();
+    }
+}
+
+public class TodoTaskFullLifecycleTests
+{
+    [Fact]
+    public void FullLifecycle_Open_Start_Close_Reopen_Start_Close()
+    {
+        var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+
+        task.Status.Should().Be(TodoTaskStatus.Open);
+
+        task.Start();
+        task.Status.Should().Be(TodoTaskStatus.InProgress);
+
+        task.Close();
+        task.Status.Should().Be(TodoTaskStatus.Closed);
+
+        task.Reopen();
+        task.Status.Should().Be(TodoTaskStatus.Reopened);
+
+        task.Start();
+        task.Status.Should().Be(TodoTaskStatus.InProgress);
+
+        task.Close();
+        task.Status.Should().Be(TodoTaskStatus.Closed);
     }
 }

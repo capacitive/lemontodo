@@ -8,7 +8,7 @@ describe('Header', () => {
   it('should render app title', () => {
     render(<Header view="board" onViewChange={vi.fn()} />);
 
-    expect(screen.getByText('LemonTodo')).toBeInTheDocument();
+    expect(screen.getByText('Lemon Kanban')).toBeInTheDocument();
   });
 
   it('should render all view buttons', () => {

@@ -51,8 +51,21 @@ describe('taskApi', () => {
     });
   });
 
+  describe('start', () => {
+    it('should start an open task', async () => {
+      const started = await taskApi.start('test-task-1');
+      expect(started.status).toBe('InProgress');
+      expect(started.startedAt).toBeDefined();
+    });
+
+    it('should return 409 for already closed task', async () => {
+      await expect(taskApi.start('test-task-2')).rejects.toThrow('409');
+    });
+  });
+
   describe('close', () => {
-    it('should close an open task', async () => {
+    it('should close an in-progress task', async () => {
+      await taskApi.start('test-task-1');
       const closed = await taskApi.close('test-task-1');
       expect(closed.status).toBe('Closed');
       expect(closed.closedAt).toBeDefined();

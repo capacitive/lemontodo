@@ -49,6 +49,16 @@ public class TaskService : ITaskService
         return task.ToResponse();
     }
 
+    public async Task<TaskResponse> StartAsync(string id, CancellationToken ct = default)
+    {
+        var task = await _repo.GetByIdAsync(id, ct)
+            ?? throw new KeyNotFoundException($"Task '{id}' not found.");
+
+        task.Start();
+        await _repo.UpdateAsync(task, ct);
+        return task.ToResponse();
+    }
+
     public async Task<TaskResponse> CloseAsync(string id, CancellationToken ct = default)
     {
         var task = await _repo.GetByIdAsync(id, ct)

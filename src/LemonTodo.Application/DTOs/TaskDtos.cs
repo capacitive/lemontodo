@@ -11,6 +11,7 @@ public record TaskResponse(
     DateOnly CompletionDate,
     string Status,
     DateTime CreatedAt,
+    DateTime? StartedAt,
     DateTime? ClosedAt,
     DateTime? ReopenedAt);
 

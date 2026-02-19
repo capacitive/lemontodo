@@ -123,7 +123,7 @@ describe('ListView', () => {
     // Recently closed section should show "Due:" and "Closed:" labels
     expect(screen.getByText('Due: 2026-01-01')).toBeInTheDocument();
     expect(screen.getByText('Due: 2026-02-15')).toBeInTheDocument();
-    expect(screen.getAllByText(/Closed:/).length).toBeGreaterThanOrEqual(3);
+    expect(screen.getAllByText(/Done:/).length).toBeGreaterThanOrEqual(3);
   });
 
   it('should sort recently closed tasks by due date ascending', async () => {

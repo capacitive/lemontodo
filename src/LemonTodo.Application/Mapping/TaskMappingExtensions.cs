@@ -13,6 +13,7 @@ public static class TaskMappingExtensions
             task.CompletionDate,
             task.Status.ToString(),
             task.CreatedAt,
+            task.StartedAt,
             task.ClosedAt,
             task.ReopenedAt);
 }

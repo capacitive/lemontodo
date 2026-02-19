@@ -21,6 +21,7 @@ public class ArchiveServiceTests
     public async Task GetById_WhenExists_ReturnsResponse()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
         task.Close();
         _archiveRepo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 
@@ -37,6 +38,7 @@ public class ArchiveServiceTests
         {
             TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1))
         };
+        tasks[0].Start();
         tasks[0].Close();
         _archiveRepo.SearchAsync("task", 1, 10, Arg.Any<CancellationToken>())
             .Returns(((IReadOnlyList<TodoTask>)tasks, 1));
@@ -52,6 +54,7 @@ public class ArchiveServiceTests
     public async Task Restore_MovesFromArchiveToActive()
     {
         var task = TodoTask.Create("id1", "Task", null, new DateOnly(2026, 3, 1));
+        task.Start();
         task.Close();
         _archiveRepo.GetByIdAsync("id1", Arg.Any<CancellationToken>()).Returns(task);
 

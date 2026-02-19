@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTasks, useCloseTask, useReopenTask, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
+import { useTasks, useCloseTask, useReopenTask, useStartTask, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
 import { useArchiveSearch, useRestoreTask } from '../../hooks/useArchive';
 import { TaskCard } from '../Task/TaskCard';
 import { TaskModal } from '../Task/TaskModal';
@@ -8,6 +8,7 @@ import type { TaskResponse, CreateTaskRequest, UpdateTaskRequest } from '../../t
 export function ListView() {
   const { data: tasks, isLoading, error } = useTasks();
   const { data: archiveData } = useArchiveSearch('', 1, 100);
+  const startTask = useStartTask();
   const closeTask = useCloseTask();
   const reopenTask = useReopenTask();
   const restoreTask = useRestoreTask();
@@ -63,6 +64,7 @@ export function ListView() {
           <TaskCard
             key={task.id}
             task={task}
+            onStart={() => startTask.mutate(task.id)}
             onClose={() => closeTask.mutate(task.id)}
             onReopen={() => reopenTask.mutate(task.id)}
             onEdit={() => { setEditingTask(task); setShowModal(true); }}
@@ -73,7 +75,7 @@ export function ListView() {
       {recentlyClosed.length > 0 && (
         <>
           <h2 style={{ fontSize: '1.1rem', color: '#374151', marginBottom: 12 }}>
-            Recently Closed ({recentlyClosed.length})
+            Recently Done ({recentlyClosed.length})
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {recentlyClosed.map((task) => (
@@ -91,7 +93,7 @@ export function ListView() {
                     Due: {task.completionDate}
                   </span>
                   <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-                    Closed: {task.closedAt ? new Date(task.closedAt).toLocaleDateString() : ''}
+                    Done: {task.closedAt ? new Date(task.closedAt).toLocaleDateString() : ''}
                   </span>
                   <button
                     onClick={() => handleReopen(task.id)}

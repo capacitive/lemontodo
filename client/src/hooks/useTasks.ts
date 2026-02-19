@@ -25,6 +25,14 @@ export function useUpdateTask() {
   });
 }
 
+export function useStartTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => taskApi.start(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+}
+
 export function useCloseTask() {
   const qc = useQueryClient();
   return useMutation({

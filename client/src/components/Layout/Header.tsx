@@ -12,7 +12,7 @@ export function Header({ view, onViewChange }: HeaderProps) {
       padding: '16px 24px', borderBottom: '1px solid #e5e7eb', background: '#fefce8',
     }}>
       <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#854d0e' }}>
-        LemonTodo
+        Lemon Kanban
       </h1>
       <nav style={{ display: 'flex', gap: 8 }}>
         {(['board', 'list', 'archive'] as ViewMode[]).map((v) => (

@@ -1,4 +1,4 @@
-export type TodoTaskStatus = 'Open' | 'Closed' | 'Reopened';
+export type TodoTaskStatus = 'Open' | 'InProgress' | 'Closed' | 'Reopened';
 
 export interface TaskResponse {
   id: string;
@@ -7,6 +7,7 @@ export interface TaskResponse {
   completionDate: string;
   status: TodoTaskStatus;
   createdAt: string;
+  startedAt: string | null;
   closedAt: string | null;
   reopenedAt: string | null;
 }
