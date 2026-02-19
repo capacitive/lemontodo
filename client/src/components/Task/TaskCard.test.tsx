@@ -54,4 +54,44 @@ describe('TaskCard', () => {
     expect(screen.getByText('Test Task')).toBeInTheDocument();
     expect(screen.queryByText('Test description')).not.toBeInTheDocument();
   });
+
+  it('should not show Edit button for closed tasks even when onEdit provided', () => {
+    const onEdit = vi.fn();
+    const closedTask = { ...mockTask, status: 'Closed' as const, closedAt: '2026-02-17T10:00:00Z' };
+
+    render(<TaskCard task={closedTask} onEdit={onEdit} />);
+
+    expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+  });
+
+  it('should show Reopen button for closed tasks', async () => {
+    const user = userEvent.setup();
+    const onReopen = vi.fn();
+    const closedTask = { ...mockTask, status: 'Closed' as const, closedAt: '2026-02-17T10:00:00Z' };
+
+    render(<TaskCard task={closedTask} onReopen={onReopen} />);
+
+    expect(screen.getByText('Reopen')).toBeInTheDocument();
+    await user.click(screen.getByText('Reopen'));
+    expect(onReopen).toHaveBeenCalled();
+  });
+
+  it('should not show Close button for closed tasks', () => {
+    const onClose = vi.fn();
+    const closedTask = { ...mockTask, status: 'Closed' as const, closedAt: '2026-02-17T10:00:00Z' };
+
+    render(<TaskCard task={closedTask} onClose={onClose} />);
+
+    expect(screen.queryByText('Close')).not.toBeInTheDocument();
+  });
+
+  it('should show Edit button for open and reopened tasks', () => {
+    const onEdit = vi.fn();
+
+    const { rerender } = render(<TaskCard task={mockTask} onEdit={onEdit} />);
+    expect(screen.getByText('Edit')).toBeInTheDocument();
+
+    rerender(<TaskCard task={{ ...mockTask, status: 'Reopened' }} onEdit={onEdit} />);
+    expect(screen.getByText('Edit')).toBeInTheDocument();
+  });
 });

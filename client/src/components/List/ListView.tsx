@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTasks, useCloseTask, useReopenTask, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
-import { useArchiveSearch } from '../../hooks/useArchive';
+import { useArchiveSearch, useRestoreTask } from '../../hooks/useArchive';
 import { TaskCard } from '../Task/TaskCard';
 import { TaskModal } from '../Task/TaskModal';
 import type { TaskResponse, CreateTaskRequest, UpdateTaskRequest } from '../../types';
@@ -10,6 +10,7 @@ export function ListView() {
   const { data: archiveData } = useArchiveSearch('', 1, 100);
   const closeTask = useCloseTask();
   const reopenTask = useReopenTask();
+  const restoreTask = useRestoreTask();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const [showModal, setShowModal] = useState(false);
@@ -18,10 +19,21 @@ export function ListView() {
   if (isLoading) return <div style={{ padding: 24, textAlign: 'center' }}>Loading...</div>;
   if (error) return <div style={{ padding: 24, color: '#dc2626' }}>Error loading tasks</div>;
 
+  const archivedTasks = archiveData?.items ?? [];
+  const archivedIds = new Set(archivedTasks.map((t) => t.id));
+
+  const handleReopen = (id: string) => {
+    if (archivedIds.has(id)) {
+      restoreTask.mutate(id);
+    } else {
+      reopenTask.mutate(id);
+    }
+  };
+
   const active = tasks?.filter((t) => t.status !== 'Closed') ?? [];
   const recentlyClosed = [
     ...(tasks?.filter((t) => t.status === 'Closed') ?? []),
-    ...(archiveData?.items ?? []),
+    ...archivedTasks,
   ];
 
   return (
@@ -76,7 +88,7 @@ export function ListView() {
                     {task.closedAt ? new Date(task.closedAt).toLocaleDateString() : ''}
                   </span>
                   <button
-                    onClick={() => reopenTask.mutate(task.id)}
+                    onClick={() => handleReopen(task.id)}
                     style={{
                       padding: '2px 8px', borderRadius: 4, border: 'none',
                       background: '#dbeafe', color: '#2563eb', fontSize: '0.75rem',

@@ -111,4 +111,30 @@ describe('BoardView', () => {
       expect(screen.getByText('Test Task 1')).toBeInTheDocument();
     });
   });
+
+  it('should not show Edit button for closed or archived tasks', async () => {
+    render(<BoardView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Task 1')).toBeInTheDocument();
+      expect(screen.getByText('Test Task 2')).toBeInTheDocument();
+      expect(screen.getByText('Archived Task')).toBeInTheDocument();
+    });
+
+    // Only the open task (Test Task 1) should have an Edit button
+    const editButtons = screen.getAllByText('Edit');
+    expect(editButtons).toHaveLength(1);
+  });
+
+  it('should show Reopen button for closed and archived tasks', async () => {
+    render(<BoardView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Task 2')).toBeInTheDocument();
+      expect(screen.getByText('Archived Task')).toBeInTheDocument();
+    });
+
+    const reopenButtons = screen.getAllByText('Reopen');
+    expect(reopenButtons).toHaveLength(2);
+  });
 });

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { TaskResponse, TodoTaskStatus } from '../../types';
 import { useTasks, useCloseTask, useReopenTask, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
-import { useArchiveSearch } from '../../hooks/useArchive';
+import { useArchiveSearch, useRestoreTask } from '../../hooks/useArchive';
 import { BoardColumn } from './BoardColumn';
 import { TaskModal } from '../Task/TaskModal';
 import type { CreateTaskRequest, UpdateTaskRequest } from '../../types';
@@ -18,10 +18,22 @@ export function BoardView() {
   const { data: archiveData } = useArchiveSearch('', 1, 100);
   const closeTask = useCloseTask();
   const reopenTask = useReopenTask();
+  const restoreTask = useRestoreTask();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskResponse | null>(null);
+
+  const archivedTasks = archiveData?.items ?? [];
+  const archivedIds = new Set(archivedTasks.map((t) => t.id));
+
+  const handleReopen = (id: string) => {
+    if (archivedIds.has(id)) {
+      restoreTask.mutate(id);
+    } else {
+      reopenTask.mutate(id);
+    }
+  };
 
   const handleDragEnd = (event: { active: { id: string | number }; over: { id: string | number } | null }) => {
     const { active, over } = event;
@@ -35,14 +47,13 @@ export function BoardView() {
     if (targetStatus === 'Closed' && (task.status === 'Open' || task.status === 'Reopened')) {
       closeTask.mutate(taskId);
     } else if (targetStatus === 'Reopened' && task.status === 'Closed') {
-      reopenTask.mutate(taskId);
+      handleReopen(taskId);
     }
   };
 
   if (isLoading) return <div style={{ padding: 24, textAlign: 'center' }}>Loading...</div>;
   if (error) return <div style={{ padding: 24, color: '#dc2626' }}>Error loading tasks</div>;
 
-  const archivedTasks = archiveData?.items ?? [];
   const grouped = Object.fromEntries(
     columns.map(({ status }) => {
       const active = tasks?.filter((t) => t.status === status) ?? [];
@@ -81,7 +92,7 @@ export function BoardView() {
               color={color}
               tasks={grouped[status]}
               onClose={(id) => closeTask.mutate(id)}
-              onReopen={(id) => reopenTask.mutate(id)}
+              onReopen={handleReopen}
               onEdit={(task) => { setEditingTask(task); setShowModal(true); }}
             />
           ))}

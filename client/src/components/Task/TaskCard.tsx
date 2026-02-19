@@ -46,7 +46,7 @@ export function TaskCard({ task, onClose, onReopen, onEdit, draggable }: TaskCar
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-        {onEdit && (
+        {onEdit && task.status !== 'Closed' && (
           <button onClick={onEdit} style={btnStyle('#f3f4f6', '#374151')}>Edit</button>
         )}
         {task.status !== 'Closed' && onClose && (

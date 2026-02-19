@@ -99,4 +99,16 @@ describe('ListView', () => {
       expect(screen.getByText('Test Task 2')).toBeInTheDocument();
     });
   });
+
+  it('should show Reopen button for closed and archived tasks', async () => {
+    render(<ListView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Task 2')).toBeInTheDocument();
+      expect(screen.getByText('Archived Task')).toBeInTheDocument();
+    });
+
+    const reopenButtons = screen.getAllByText('Reopen');
+    expect(reopenButtons).toHaveLength(2);
+  });
 });
