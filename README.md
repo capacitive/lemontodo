@@ -5,10 +5,10 @@ A full-stack to-do task management application built with .NET 9 Minimal API and
 ## Architecture
 
 ```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  React SPA  │────▶│  .NET Minimal API │────▶│  EF Core Stores │
-│  (Vite+TS)  │◀────│  + SignalR Hub    │     │  InMemory+SQLite│
-└─────────────┘     └──────────────────┘     └─────────────────┘
+┌─────────────┐     ┌───────────────────┐     ┌──────────────────┐
+│  React SPA  │────▶│  .NET Minimal API │────▶│  EF Core Stores  │
+│  (Vite+TS)  │◀────│  + SignalR Hub    │     │  InMemory+SQLite │
+└─────────────┘     └───────────────────┘     └──────────────────┘
 ```
 
 **Clean Architecture layers:**
@@ -37,7 +37,8 @@ A full-stack to-do task management application built with .NET 9 Minimal API and
 # From repo root
 dotnet restore
 dotnet build
-dotnet test              # Run all 68 tests
+dotnet test     # Run all 80 backend tests
+npm test        # Run all 74 UI tests
 
 # Start the API server
 dotnet run --project src/LemonTodo.Api
@@ -135,14 +136,13 @@ lemontodo/
 - **InMemory = volatile** — Active tasks are lost on API restart. Acceptable for iteration 1; future: seed from SQLite on startup.
 - **System.Threading.Channels over MediatR** — Simpler for single producer-consumer; would add MediatR if event taxonomy grows.
 - **Manual DTO mapping** — Transparent, type-safe, no AutoMapper magic.
-- **No authentication** — Planned for iteration 2.
+- **No authentication** — Planned for iteration 2 (current work in progress on the 'user-account' branch in the GitHub).
 - **Inline styles** — Fast iteration; a real app would use CSS modules or Tailwind.
 
 ## Future Features
 
-- User accounts and authentication (JWT)
-- AI agent MVC layer with gRPC (iteration 2)
-- Persistent active store (seed from SQLite on startup)
-- Task priorities and labels
-- Due date reminders
-- Bulk operations
+- User accounts with OAuth2 (Google and GitHub), 2FA, and API key authorization, with an account management dashboard.
+- AI agent MVC layer with gRPC - agents can use this visual kanban to enable human-in-the-loop (HITL) interactions.
+- Persistent active store (switch to scalable, performant and robust cloud data store)
+- Task priorities, categories and labels - almost Jira-like features for a wide range of use cases.
+- Due date reminders (email and/or text) - an essential feature included in most productivity apps.
