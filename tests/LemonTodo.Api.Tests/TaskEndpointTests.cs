@@ -2,23 +2,73 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using LemonTodo.Application.DTOs;
+using LemonTodo.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace LemonTodo.Api.Tests;
 
-public class TaskEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class LemonTodoWebAppFactory : WebApplicationFactory<Program>
+{
+    private readonly SqliteConnection _activeConnection;
+    private readonly SqliteConnection _archiveConnection;
+
+    public LemonTodoWebAppFactory()
+    {
+        // Keep in-memory SQLite connections open for the lifetime of the factory
+        _activeConnection = new SqliteConnection("DataSource=:memory:");
+        _activeConnection.Open();
+        _archiveConnection = new SqliteConnection("DataSource=:memory:");
+        _archiveConnection.Open();
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Testing");
+
+        builder.ConfigureServices(services =>
+        {
+            // Remove the production DbContext registrations
+            var activeDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(DbContextOptions<ActiveDbContext>));
+            if (activeDescriptor != null) services.Remove(activeDescriptor);
+
+            var archiveDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(DbContextOptions<ArchiveDbContext>));
+            if (archiveDescriptor != null) services.Remove(archiveDescriptor);
+
+            // Add in-memory SQLite contexts
+            services.AddDbContext<ActiveDbContext>(opt =>
+                opt.UseSqlite(_activeConnection));
+            services.AddDbContext<ArchiveDbContext>(opt =>
+                opt.UseSqlite(_archiveConnection));
+        });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _activeConnection.Close();
+            _activeConnection.Dispose();
+            _archiveConnection.Close();
+            _archiveConnection.Dispose();
+        }
+    }
+}
+
+public class TaskEndpointTests : IClassFixture<LemonTodoWebAppFactory>
 {
     private readonly HttpClient _client;
 
-    public TaskEndpointTests(WebApplicationFactory<Program> factory)
+    public TaskEndpointTests(LemonTodoWebAppFactory factory)
     {
-        var testFactory = factory.WithWebHostBuilder(builder =>
-        {
-            builder.UseEnvironment("Testing");
-        });
-        _client = testFactory.CreateClient();
+        _client = factory.CreateClient();
     }
 
     [Fact]
