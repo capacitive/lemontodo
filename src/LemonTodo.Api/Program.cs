@@ -110,6 +110,18 @@ builder.Services.AddScoped<IArchiveService, ArchiveService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 
+// OAuth
+var oauthSettings = new OAuthSettings();
+builder.Configuration.GetSection("OAuth").Bind(oauthSettings);
+builder.Services.AddSingleton(oauthSettings);
+var callbackBaseUrl = builder.Configuration["OAuth:CallbackBaseUrl"] ?? "http://localhost:5175";
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IGitHubOAuthService>(sp =>
+    new GitHubOAuthService(
+        sp.GetRequiredService<OAuthSettings>(),
+        sp.GetRequiredService<IHttpClientFactory>().CreateClient(),
+        $"{callbackBaseUrl}/api/auth/github/callback"));
+
 // Infrastructure
 builder.Services.AddSingleton<IIdGenerator, NanoIdGenerator>();
 builder.Services.AddSingleton<ITaskEventChannel, TaskEventChannel>();
