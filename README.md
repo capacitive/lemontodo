@@ -2,6 +2,20 @@
 
 A full-stack to-do task management application built with .NET 9 Minimal API and React + TypeScript.
 
+## My Methodology
+
+I built this app in collaboration with Claude using the Claude Code terminal.  The approach I took is as follows:
+
+1. I did the system design myself, including tech stack choices.
+2. Converted my design document into an extensive prompt for Claude, along with Claude Skills and subagents I created myself.
+3. Instructed Claude to follow the project plan, and arrange commits into phases, outlined in `docs/project.txt`.
+4. Created a secondary repo project.  This is a code review tool, which is triggered by a GitHub action listening to commits in the `lemontodo` repo.
+5. I used this secondary app to review and approve the phased commits, in order to ensure Claude followed my system design to the letter.
+6. The outcome of this process is that I understand every aspect of the codebase, and was able to write a lot of the code myself and push commits once the main phases were complete. I added features of my own, with Claude working on the boring bits, like writing tests.  Claude did not move on to the next phase until I completed the extensive code review process.
+
+## What I fully automated using Claude
+Although I know the application code itself very well, I didn't review the test code except at a very high level, rather allowing Claude to go ahead and write unit and e2e tests unattended.  I also had Claude create UI e2e tests, which I reviewed more extensively, taking this opportunity to learn a new approach to UI testing I hadn't experienced before.  I feel strongly that test code is an excellent candidate for AI automation, so this philosophy governed my approach.  I also asked Claude to add or modify tests based on my own manual bug fixes that I committed.  Test code is deterministic, time consuming, and tedious - a perfect task for a robot!
+ 
 ## Architecture
 
 ```
