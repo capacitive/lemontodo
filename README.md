@@ -9,8 +9,8 @@ I built this app in collaboration with Claude using the Claude Code terminal.  T
 1. I did the system design myself, including tech stack choices.
 2. Converted my design document into an extensive prompt for Claude, along with Claude Skills and subagents I created myself.
 3. Instructed Claude to follow the project plan, and arrange commits into phases, outlined in `docs/project.txt`.
-4. Created a secondary repo project.  This is a code review tool, which is triggered by a GitHub action listening to commits in the `lemontodo` repo.
-5. I used this secondary app to review and approve the phased commits, in order to ensure Claude followed my system design to the letter.
+4. Created a secondary repo project.  This is an agentic code review tool, which is triggered by a GitHub action listening to commits in the `lemontodo` repo. it commits a new review module for each unit of work.
+5. I used commit pulls from this secondary repo to review and approve the phased commits, in order to ensure Claude followed my system design to the letter.
 6. The outcome of this process is that I understand every aspect of the codebase, and was able to write a lot of the code myself and push commits once the main phases were complete. I added features of my own, with Claude working on the boring bits, like writing tests.  Claude did not move on to the next phase until I completed the extensive code review process.
 
 ## What I fully automated using Claude
