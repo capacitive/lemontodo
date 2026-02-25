@@ -38,12 +38,11 @@ A full-stack to-do task management application built with .NET 9 Minimal API and
 dotnet restore
 dotnet build
 dotnet test     # Run all 80 backend tests
-npm test        # Run all 74 UI tests
 
 # Start the API server
 dotnet run --project src/LemonTodo.Api
-# API: http://localhost:5062
-# OpenAPI docs: http://localhost:5062/scalar/v1
+# API: http://localhost:5175
+# OpenAPI docs: http://localhost:5175/scalar/v1
 ```
 
 ### Frontend
@@ -51,6 +50,7 @@ dotnet run --project src/LemonTodo.Api
 ```bash
 cd client
 npm install
+npm test        # Run all 74 UI tests
 npm run dev
 # UI: http://localhost:5173
 ```
